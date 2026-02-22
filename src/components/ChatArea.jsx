@@ -23,27 +23,62 @@ function ChatArea({ mood }) {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    const handleSend = (e) => {
+    const handleSend = async (e) => {
         e.preventDefault();
         if (!input.trim()) return;
 
+        const userText = input.trim();
         const userMsg = {
             id: Date.now(),
             sender: 'user',
-            text: input.trim(),
+            text: userText,
             timestamp: new Date().toISOString()
         };
 
-        setMessages(prev => [...prev, userMsg]);
+        const currentMessages = [...messages, userMsg];
+        setMessages(currentMessages);
         setInput('');
         setIsTyping(true);
 
-        // Mock bot response based on mood
-        setTimeout(() => {
-            let botText = "I hear you. Tell me more about that.";
-            if (mood === 'Anxious') botText = "It sounds like you're carrying a lot of weight right now. Let's take a deep breath. What's the main thing causing this anxiety?";
-            if (mood === 'Low') botText = "I'm sorry you're feeling low. It's okay to feel this way. Be gentle with yourself today. Do you want to unpack it, or just distraction?";
-            if (mood === 'Great') botText = "That's wonderful to hear! It's always good to acknowledge the positive days. What's making today great?";
+        try {
+            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+            if (!apiKey || apiKey === 'your_gemini_api_key_here') {
+                throw new Error("Missing Gemini API Key. Please get your API key from https://aistudio.google.com/ and add it to .env.local as VITE_GEMINI_API_KEY.");
+            }
+
+            // Convert chat history to Gemini format
+            const history = currentMessages.map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            }));
+
+            const systemInstruction = `You are Mind Ease, an empathetic and supportive AI therapist. Listen without judgment, ask guiding questions to help the user reflect, and validate their feelings. Keep responses concise and conversational. The user's current self-reported mood is: ${mood || 'Not specified'}.`;
+
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    system_instruction: {
+                        parts: [{ text: systemInstruction }]
+                    },
+                    contents: history,
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 250,
+                    }
+                })
+            });
+
+            if (!response.ok) {
+                const errData = await response.json().catch(() => ({}));
+                throw new Error(errData.error?.message || `API request failed with status ${response.status}`);
+            }
+
+            const data = await response.json();
+            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now. Can you try again?";
 
             const botMsg = {
                 id: Date.now() + 1,
@@ -53,8 +88,18 @@ function ChatArea({ mood }) {
             };
 
             setMessages(prev => [...prev, botMsg]);
+        } catch (error) {
+            console.error("Gemini API Error:", error);
+            const errorMsg = {
+                id: Date.now() + 1,
+                sender: 'bot',
+                text: `[System]: I encountered an error: ${error.message}`,
+                timestamp: new Date().toISOString()
+            };
+            setMessages(prev => [...prev, errorMsg]);
+        } finally {
             setIsTyping(false);
-        }, 1500);
+        }
     };
 
     return (
