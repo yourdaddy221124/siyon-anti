@@ -22,18 +22,91 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem 1.5rem;
+    padding: 0.75rem 1.5rem;
     border-radius: 0;
     border-left: none;
     border-right: none;
     border-top: none;
     z-index: 10;
+    gap: 1rem;
 }
 
-.chat-header h2 {
-    font-size: 1.25rem;
+.chat-title {
+    font-size: 1.15rem;
     margin: 0;
     color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.mode-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    letter-spacing: 0.03em;
+}
+
+.mode-label.classic {
+    background: rgba(56, 189, 248, 0.15);
+    color: var(--text-accent);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.mode-label.genz {
+    background: rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+/* Mode Toggle Pills */
+.mode-toggle {
+    display: flex;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--card-border);
+    border-radius: 9999px;
+    overflow: hidden;
+    padding: 2px;
+    gap: 2px;
+}
+
+.mode-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    white-space: nowrap;
+}
+
+.mode-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.mode-btn.active {
+    background: var(--primary-btn);
+    color: #fff;
+    box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+}
+
+.mode-btn.genz-btn.active {
+    background: linear-gradient(135deg, #7c3aed, #a855f7);
+    box-shadow: 0 2px 10px rgba(168, 85, 247, 0.4);
 }
 
 .btn-icon {
@@ -47,6 +120,7 @@
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
+    flex-shrink: 0;
 }
 
 .btn-icon:hover {
@@ -67,9 +141,30 @@
     flex-direction: column;
 }
 
-/* Sidebar Toggle for Mobile */
+/* Sidebar overlay for mobile */
+.sidebar-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 30;
+}
+
 @media (max-width: 768px) {
     .chat-header {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
+    }
+
+    .mode-toggle {
+        display: none;
+    }
+
+    .chat-title .mode-label {
+        display: none;
+    }
+}
+
+@media (max-width: 500px) {
+    .header-actions {
+        gap: 0.4rem;
     }
 }

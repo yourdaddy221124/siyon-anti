@@ -37,7 +37,11 @@ function Register() {
             if (error) throw error;
             navigate('/chat');
         } catch (error) {
-            setError(error.message);
+            if (error.message.includes('rate limit')) {
+                setError('Email rate limit exceeded. Please try again later, or use a different email address. (For testing: disable email confirmations in Supabase Dashboard)');
+            } else {
+                setError(error.message);
+            }
         } finally {
             setIsLoading(false);
         }
