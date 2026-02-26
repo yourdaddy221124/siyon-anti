@@ -8,7 +8,7 @@ function ThemeToggle() {
 
     return (
         <button
-            className="theme-toggle glass-panel"
+            className="theme-toggle-btn"
             onClick={toggleTheme}
             aria-label="Toggle theme"
             title={theme === 'dark' ? "Switch to Light Mode" : "Switch to Dark Mode"}

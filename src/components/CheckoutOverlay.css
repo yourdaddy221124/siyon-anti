@@ -1,145 +1,175 @@
-.checkout-content {
-    width: 100%;
-    max-width: 400px;
-    background: var(--bg-color);
-    border-radius: 16px;
-    position: relative;
-    padding: 2rem;
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
-    border: 1px solid var(--card-border);
+/* ═══════════════════════════════════════════
+   CHECKOUT OVERLAY — AURORA DESIGN
+═══════════════════════════════════════════ */
+
+.checkout-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(10px);
+    z-index: 400;
+    display: grid;
+    place-items: center;
+    padding: 1rem;
+    animation: fadeIn 0.25s ease both;
 }
 
-.abs-close {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
+.checkout-modal {
+    width: 100%;
+    max-width: 480px;
+    background: rgba(10, 12, 26, 0.98);
+    border: 1px solid rgba(124, 58, 237, 0.3);
+    border-radius: var(--radius-xl);
+    box-shadow: 0 30px 80px rgba(0, 0, 0, 0.7), 0 0 60px rgba(124, 58, 237, 0.15);
+    animation: scaleIn 0.35s var(--ease-spring) both;
+    overflow: hidden;
 }
 
 .checkout-header {
-    text-align: center;
-    margin-bottom: 2rem;
+    padding: 1.5rem 1.75rem;
+    border-bottom: 1px solid var(--glass-border);
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.15), rgba(6, 182, 212, 0.08));
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.checkout-header-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
 }
 
 .checkout-header h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.5rem;
-}
-
-.checkout-price {
-    font-size: 2rem;
+    font-size: 1.1rem;
     font-weight: 700;
-    color: var(--text-accent);
+    color: var(--text-primary);
+    margin: 0;
 }
 
-.checkout-form {
+.checkout-plan-name {
+    font-size: 0.8rem;
+    color: var(--text-accent);
+    font-weight: 600;
+}
+
+.checkout-close {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--glass-border);
+    background: var(--glass-2);
+    color: var(--text-muted);
+    cursor: pointer;
+    display: grid;
+    place-items: center;
+    font-size: 1.1rem;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.checkout-close:hover {
+    background: var(--glass-3);
+    color: var(--text-primary);
+}
+
+.checkout-body {
+    padding: 1.75rem;
     display: flex;
     flex-direction: column;
-    gap: 1.5rem;
+    gap: 1.25rem;
 }
 
-.form-group {
+/* Price Summary */
+.checkout-price-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 1.25rem;
+    background: linear-gradient(135deg, rgba(124, 58, 237, 0.12), rgba(6, 182, 212, 0.08));
+    border: 1px solid rgba(124, 58, 237, 0.25);
+    border-radius: var(--radius-lg);
+}
+
+.checkout-price-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+}
+
+.checkout-price-amount {
+    font-size: 1.7rem;
+    font-weight: 800;
+    font-family: var(--font-display);
+    background: var(--grad-primary);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Form */
+.checkout-form-group {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.form-group label {
-    font-size: 0.875rem;
-    font-weight: 500;
+.checkout-form-group label {
+    font-size: 0.82rem;
+    font-weight: 600;
     color: var(--text-secondary);
 }
 
-.mock-card-input,
-.standard-input {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    padding: 0.75rem 1rem;
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-    transition: border-color 0.2s;
-}
-
-.mock-card-input:focus-within,
-.standard-input:focus {
-    border-color: var(--primary-btn);
-}
-
-.mock-card-input input,
-.standard-input,
-.card-details input {
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    font-family: monospace;
-    font-size: 1rem;
-    outline: none;
+.checkout-input {
     width: 100%;
+    padding: 0.8rem 1rem;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.25s;
 }
 
-.standard-input {
-    font-family: inherit;
+.checkout-input:focus {
+    border-color: var(--aurora-1);
+    box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.2);
 }
 
-.card-details {
+.checkout-input::placeholder {
+    color: var(--text-muted);
+}
+
+.checkout-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1rem;
-    margin-top: -0.5rem;
 }
 
-.card-details input {
-    padding: 0.75rem 1rem;
-    background: rgba(15, 23, 42, 0.5);
-    border: 1px solid var(--card-border);
-    border-radius: 8px;
-}
-
-.card-details input:focus {
-    border-color: var(--primary-btn);
-}
-
-.checkout-btn {
-    margin-top: 1rem;
-    padding: 1rem;
-    font-size: 1.1rem;
-}
-
-.flex-center {
+.checkout-security {
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: 8px;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    padding: 0.6rem 0.9rem;
+    background: rgba(16, 185, 129, 0.08);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: var(--radius-md);
 }
 
-.secure-badge {
-    text-align: center;
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-top: 1.5rem;
-    margin-bottom: 0;
-}
-
-.success-state {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    padding: 2rem 0;
-    gap: 1rem;
-}
-
-.success-icon {
+.checkout-security svg {
     color: #34d399;
+    flex-shrink: 0;
 }
 
-.success-state h3 {
-    margin: 0;
-    color: #fff;
-}
-
-.success-state p {
-    color: var(--text-secondary);
-    margin: 0;
-    font-size: 0.95rem;
+.checkout-pay-btn {
+    width: 100%;
+    padding: 1rem;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    border-radius: var(--radius-lg);
 }

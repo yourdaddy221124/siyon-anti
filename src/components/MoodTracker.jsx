@@ -1,55 +1,55 @@
-import React, { useState } from 'react';
-import { Smile, Frown, Meh, Heart } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Smile, Frown, Meh, Heart, Activity } from 'lucide-react';
 import './MoodTracker.css';
+
+const MOODS = [
+    { label: 'Great', emoji: '🤩', color: '#34d399' },
+    { label: 'Good', emoji: '😊', color: '#38bdf8' },
+    { label: 'Neutral', emoji: '😐', color: '#94a3b8' },
+    { label: 'Anxious', emoji: '😰', color: '#fb923c' },
+    { label: 'Low', emoji: '😔', color: '#f43f5e' },
+];
 
 function MoodTracker({ currentMood, setMood }) {
     const [isOpen, setIsOpen] = useState(false);
+    const ref = useRef(null);
 
-    const moods = [
-        { label: 'Great', icon: Heart, color: '#34d399' },
-        { label: 'Good', icon: Smile, color: '#38bdf8' },
-        { label: 'Neutral', icon: Meh, color: '#94a3b8' },
-        { label: 'Anxious', icon: Frown, color: '#fb923c' },
-        { label: 'Low', icon: Frown, color: '#f43f5e' },
-    ];
+    // Close when clicking outside
+    useEffect(() => {
+        const handler = (e) => {
+            if (ref.current && !ref.current.contains(e.target)) setIsOpen(false);
+        };
+        document.addEventListener('mousedown', handler);
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
 
-    const CurrentIcon = moods.find(m => m.label === currentMood)?.icon || Meh;
-    const currentColor = moods.find(m => m.label === currentMood)?.color || '#94a3b8';
+    const current = MOODS.find(m => m.label === currentMood) || MOODS[2];
 
     return (
-        <div className="mood-tracker">
+        <div className={`mood-tracker ${isOpen ? 'open' : ''}`} ref={ref}>
             <button
-                className="mood-toggle glass-panel"
+                className="mood-trigger"
                 onClick={() => setIsOpen(!isOpen)}
-                style={{ '--icon-color': currentColor }}
+                title="Log your mood"
             >
-                <span className="mood-status">How are you?</span>
-                <CurrentIcon size={20} className="current-mood-icon" />
+                <span className="mood-emoji">{current.emoji}</span>
+                <span>{current.label}</span>
+                <span className="mood-chevron">▾</span>
             </button>
 
             {isOpen && (
-                <div className="mood-dropdown glass-panel animate-fade-in">
-                    <p className="mood-title">Log your mood</p>
-                    <div className="mood-grid">
-                        {moods.map((mood) => {
-                            const Icon = mood.icon;
-                            const isSelected = currentMood === mood.label;
-                            return (
-                                <button
-                                    key={mood.label}
-                                    className={`mood-option ${isSelected ? 'selected' : ''}`}
-                                    onClick={() => {
-                                        setMood(mood.label);
-                                        setIsOpen(false);
-                                    }}
-                                    style={{ '--hover-color': mood.color }}
-                                    title={mood.label}
-                                >
-                                    <Icon size={24} color={isSelected ? mood.color : 'inherit'} />
-                                </button>
-                            );
-                        })}
-                    </div>
+                <div className="mood-dropdown">
+                    <div className="mood-label-header">How are you feeling?</div>
+                    {MOODS.map((mood) => (
+                        <button
+                            key={mood.label}
+                            className={`mood-option ${currentMood === mood.label ? 'active' : ''}`}
+                            onClick={() => { setMood(mood.label); setIsOpen(false); }}
+                        >
+                            <span className="mood-opt-emoji">{mood.emoji}</span>
+                            <span>{mood.label}</span>
+                        </button>
+                    ))}
                 </div>
             )}
         </div>

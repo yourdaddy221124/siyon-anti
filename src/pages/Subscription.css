@@ -1,179 +1,206 @@
+/* ═══════════════════════════════════════════
+   SUBSCRIPTION PAGE — AURORA DESIGN
+═══════════════════════════════════════════ */
+
 .subscription-page {
     min-height: 100vh;
-    padding: 1.5rem;
-    max-width: 1200px;
-    margin: 0 auto;
-    display: flex;
-    flex-direction: column;
+    background: var(--bg-base);
+    position: relative;
+    overflow-x: hidden;
+}
+
+.subscription-page::before {
+    content: '';
+    position: fixed;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    top: -200px;
+    right: -150px;
+    background: radial-gradient(circle, rgba(124, 58, 237, 0.15) 0%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    animation: aurora-move 18s ease-in-out infinite;
 }
 
 .sub-nav {
-    padding: 1rem 0;
-    margin-bottom: 2rem;
+    padding: 1.2rem 2.5rem;
+    border-bottom: 1px solid var(--glass-border);
 }
 
 .back-link {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
     color: var(--text-secondary);
-    font-weight: 500;
+    font-size: 0.9rem;
+    font-weight: 600;
+    text-decoration: none;
     padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    background: rgba(255, 255, 255, 0.05);
-    transition: all 0.2s;
+    border-radius: var(--radius-pill);
+    background: var(--glass-1);
+    border: 1px solid var(--glass-border);
+    transition: all 0.25s var(--ease-smooth);
 }
 
 .back-link:hover {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
+    color: var(--text-primary);
+    background: var(--glass-2);
+    transform: translateX(-3px);
     text-decoration: none;
 }
 
 .sub-main {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    position: relative;
+    z-index: 1;
 }
 
 .sub-header {
     text-align: center;
-    margin-bottom: 4rem;
-    max-width: 600px;
+    margin-bottom: 3rem;
 }
 
 .sub-title {
-    font-size: clamp(2.5rem, 6vw, 4rem);
-    font-weight: 700;
-    margin-bottom: 1rem;
+    font-size: clamp(2rem, 5vw, 3rem);
+    font-weight: 800;
+    margin-bottom: 0.75rem;
 }
 
 .sub-subtitle {
-    font-size: 1.125rem;
     color: var(--text-secondary);
-    margin-bottom: 2.5rem;
+    font-size: 1.05rem;
+    margin-bottom: 2rem;
 }
 
+/* ─── Billing Toggle ─── */
 .billing-toggle {
     display: inline-flex;
-    padding: 0.5rem;
-    border-radius: 9999px;
-    gap: 0.5rem;
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-pill);
     margin: 0 auto;
 }
 
 .toggle-btn {
-    padding: 0.75rem 1.5rem;
-    border-radius: 9999px;
+    padding: 0.55rem 1.3rem;
     border: none;
-    background: transparent;
-    color: var(--text-secondary);
-    font-weight: 500;
-    font-size: 0.95rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.9rem;
+    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s;
+    background: transparent;
+    color: var(--text-muted);
+    transition: all 0.3s var(--ease-spring);
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 8px;
 }
 
 .toggle-btn.active {
-    background: rgba(255, 255, 255, 0.1);
-    color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    background: var(--grad-primary);
+    color: white;
+    box-shadow: 0 3px 14px rgba(124, 58, 237, 0.45);
 }
 
 .save-badge {
-    background: rgba(52, 211, 153, 0.2);
-    color: #34d399;
-    font-size: 0.75rem;
-    padding: 0.25rem 0.5rem;
-    border-radius: 9999px;
-    font-weight: 600;
+    font-size: 0.7rem;
+    background: rgba(16, 185, 129, 0.2);
+    color: #6ee7b7;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 2px 8px;
+    border-radius: var(--radius-pill);
+    font-weight: 700;
 }
 
-/* Pricing Cards */
+/* ─── Pricing Cards ─── */
 .pricing-cards {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: 2rem;
-    width: 100%;
-    max-width: 900px;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
 }
 
 .pricing-card {
-    padding: 2.5rem;
+    padding: 2rem;
     display: flex;
     flex-direction: column;
+    gap: 1.5rem;
     position: relative;
-    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: transform 0.35s var(--ease-spring), box-shadow 0.35s;
+    animation: card-rise 0.7s var(--ease-smooth) both;
 }
 
 .pricing-card:hover {
-    transform: translateY(-8px);
+    transform: translateY(-6px);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.4);
 }
 
 .premium-card {
-    border: 1px solid rgba(56, 189, 248, 0.3);
-    box-shadow: 0 8px 32px rgba(2, 132, 199, 0.2);
-    background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+    border-color: rgba(124, 58, 237, 0.35) !important;
+    background: linear-gradient(160deg, rgba(124, 58, 237, 0.1) 0%, rgba(6, 182, 212, 0.06) 100%) !important;
+    box-shadow: var(--glass-shadow), 0 0 40px rgba(124, 58, 237, 0.15) !important;
+    animation-delay: 0.1s;
+}
+
+.premium-card:hover {
+    box-shadow: var(--glass-shadow), 0 0 60px rgba(124, 58, 237, 0.25) !important;
 }
 
 .popular-badge {
     position: absolute;
-    top: -12px;
+    top: -14px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--primary-btn);
-    color: #fff;
-    padding: 0.25rem 1rem;
-    border-radius: 9999px;
-    font-size: 0.875rem;
-    font-weight: 600;
+    background: var(--grad-primary);
+    color: white;
+    padding: 5px 18px;
+    border-radius: var(--radius-pill);
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
     display: flex;
     align-items: center;
-    gap: 0.25rem;
-    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+    gap: 5px;
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+    white-space: nowrap;
 }
 
 .card-header {
-    margin-bottom: 2rem;
-    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .card-header h3 {
-    font-size: 1.5rem;
-    margin-bottom: 1rem;
-    color: var(--text-secondary);
-}
-
-.premium-card h3 {
-    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0;
 }
 
 .price {
     display: flex;
     align-items: baseline;
-    justify-content: center;
-    gap: 0.25rem;
-    margin-bottom: 1rem;
+    gap: 4px;
 }
 
 .amount {
-    font-size: 3.5rem;
+    font-size: 2.4rem;
     font-weight: 800;
-    line-height: 1;
-    color: #fff;
+    font-family: var(--font-display);
+    color: var(--text-primary);
 }
 
 .period {
-    color: var(--text-secondary);
-    font-weight: 500;
+    font-size: 0.85rem;
+    color: var(--text-muted);
 }
 
-.text-accent .amount {
-    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+.premium-card .amount {
+    background: var(--grad-primary);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -181,36 +208,37 @@
 
 .card-desc {
     color: var(--text-secondary);
-    font-size: 0.95rem;
+    font-size: 0.87rem;
+    margin: 0;
 }
 
 .feature-list {
     list-style: none;
-    margin-bottom: 2.5rem;
     display: flex;
     flex-direction: column;
-    gap: 1rem;
+    gap: 0.65rem;
+    flex: 1;
 }
 
 .feature-list li {
     display: flex;
     align-items: center;
-    gap: 0.75rem;
-    color: var(--text-primary);
-    font-size: 0.95rem;
+    gap: 10px;
+    font-size: 0.88rem;
+    color: var(--text-secondary);
 }
 
 .feature-list li.disabled {
-    color: var(--text-secondary);
-    opacity: 0.5;
+    opacity: 0.4;
 }
 
 .check-icon {
-    color: var(--text-secondary);
+    color: var(--aurora-3);
+    flex-shrink: 0;
 }
 
-.check-icon.text-accent {
-    color: var(--text-accent);
+.check-icon.disabled {
+    color: var(--text-muted);
 }
 
 .full-width {
@@ -221,18 +249,16 @@
     margin-top: auto;
 }
 
-@media (max-width: 768px) {
-    .sub-title {
-        font-size: 2.5rem;
+@media (max-width: 640px) {
+    .pricing-cards {
+        grid-template-columns: 1fr;
     }
 
-    .billing-toggle {
-        flex-direction: column;
-        border-radius: 20px;
+    .sub-main {
+        padding: 2.5rem 1rem;
     }
 
-    .toggle-btn {
-        width: 100%;
-        justify-content: center;
+    .sub-nav {
+        padding: 1rem;
     }
 }
