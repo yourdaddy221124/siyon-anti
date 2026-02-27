@@ -1,12 +1,20 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Home, MessageSquare, Settings, PlusCircle, CreditCard, Sparkles } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Home, MessageSquare, Settings, PlusCircle, CreditCard, Sparkles, LogOut } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
 import SettingsModal from './SettingsModal';
+import { useAuth } from '../context/AuthContext';
 import './Sidebar.css';
 
 function Sidebar({ isOpen, toggleSidebar }) {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+    const { user, signOut } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    };
     const recentChats = [
         { id: 1, title: 'Processing anxiety' },
         { id: 2, title: 'Reflection on work' },
@@ -53,6 +61,11 @@ function Sidebar({ isOpen, toggleSidebar }) {
                     <button className="sidebar-link border-none" onClick={() => setIsSettingsOpen(true)}>
                         <Settings size={18} /> Settings
                     </button>
+                    {user && (
+                        <button className="sidebar-link border-none" onClick={handleLogout} style={{ color: '#f87171' }}>
+                            <LogOut size={18} /> Sign Out
+                        </button>
+                    )}
                 </div>
             </aside>
             <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />

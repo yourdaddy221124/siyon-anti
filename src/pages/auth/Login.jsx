@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Mail, Lock, AlertCircle } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useAuth } from '../../context/AuthContext';
 import './Auth.css';
 
 function Login() {
@@ -10,6 +11,12 @@ function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
+    const { user, loading } = useAuth();
+
+    // Redirect if already logged in
+    if (!loading && user) {
+        return <Navigate to="/chat" replace />;
+    }
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -17,15 +24,28 @@ function Login() {
         setError('');
 
         try {
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data, error } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
             if (error) throw error;
-            navigate('/chat');
+
+            if (data?.user) {
+                navigate('/chat');
+            }
         } catch (error) {
-            setError(error.message);
+            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError') || error.message.includes('network') || error.name === 'TypeError') {
+                setError('Network error — cannot reach the server. Please check your internet connection and try again.');
+            } else if (error.message.includes('Invalid login credentials')) {
+                setError('Incorrect email or password. Please try again.');
+            } else if (error.message.includes('Email not confirmed')) {
+                setError('Please confirm your email address before logging in. Check your inbox.');
+            } else if (error.message.includes('Too many requests')) {
+                setError('Too many login attempts. Please wait a moment and try again.');
+            } else {
+                setError(error.message);
+            }
         } finally {
             setIsLoading(false);
         }

@@ -89,6 +89,12 @@
     border: 1px solid rgba(236, 72, 153, 0.3);
 }
 
+.mode-label.character {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.25), rgba(168, 85, 247, 0.2));
+    color: #c4b5fd;
+    border: 1px solid rgba(168, 85, 247, 0.35);
+}
+
 .header-actions {
     display: flex;
     align-items: center;
@@ -126,6 +132,11 @@
 .mode-btn.genz-btn.active {
     background: var(--grad-genz);
     box-shadow: 0 3px 12px rgba(236, 72, 153, 0.4);
+}
+
+.mode-btn.character-btn.active {
+    background: linear-gradient(135deg, #6366f1, #a855f7);
+    box-shadow: 0 3px 12px rgba(99, 102, 241, 0.45);
 }
 
 .mode-btn:not(.active):hover {

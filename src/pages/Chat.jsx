@@ -7,9 +7,14 @@ import './Chat.css';
 function Chat() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentMood, setCurrentMood] = useState('Neutral');
-    const [chatMode, setChatMode] = useState('classic'); // 'classic' | 'genz'
+    const [chatMode, setChatMode] = useState('classic'); // 'classic' | 'genz' | 'character'
+    const [character, setCharacter] = useState('yoda'); // default character
 
     const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+    const handleModeChange = (mode) => {
+        setChatMode(mode);
+    };
 
     return (
         <div className="chat-layout">
@@ -39,6 +44,8 @@ function Chat() {
                         Mind Ease{' '}
                         {chatMode === 'genz' ? (
                             <span className="mode-label genz">Gen-Z 🔥</span>
+                        ) : chatMode === 'character' ? (
+                            <span className="mode-label character">Character 🎭</span>
                         ) : (
                             <span className="mode-label classic">Classic 🎓</span>
                         )}
@@ -49,15 +56,21 @@ function Chat() {
                         <div className="mode-toggle" title="Switch chat mode">
                             <button
                                 className={`mode-btn ${chatMode === 'classic' ? 'active' : ''}`}
-                                onClick={() => setChatMode('classic')}
+                                onClick={() => handleModeChange('classic')}
                             >
                                 🎓 Classic
                             </button>
                             <button
                                 className={`mode-btn genz-btn ${chatMode === 'genz' ? 'active' : ''}`}
-                                onClick={() => setChatMode('genz')}
+                                onClick={() => handleModeChange('genz')}
                             >
                                 🔥 Gen-Z
+                            </button>
+                            <button
+                                className={`mode-btn character-btn ${chatMode === 'character' ? 'active' : ''}`}
+                                onClick={() => handleModeChange('character')}
+                            >
+                                🎭 Character
                             </button>
                         </div>
                         <MoodTracker currentMood={currentMood} setMood={setCurrentMood} />
@@ -65,7 +78,12 @@ function Chat() {
                 </header>
 
                 <div className="chat-scroll-area">
-                    <ChatArea mood={currentMood} chatMode={chatMode} />
+                    <ChatArea
+                        mood={currentMood}
+                        chatMode={chatMode}
+                        character={character}
+                        onCharacterChange={setCharacter}
+                    />
                 </div>
             </main>
         </div>

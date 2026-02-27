@@ -1,15 +1,83 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Loader, Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
+import { Send, Bot, User, Loader, Mic, MicOff, Volume2, VolumeX, ChevronDown } from 'lucide-react';
 import './ChatArea.css';
 
-function ChatArea({ mood, chatMode }) {
+const CHARACTERS = [
+    {
+        id: 'yoda',
+        name: 'Master Yoda',
+        emoji: '🧙‍♂️',
+        desc: 'Wise Jedi Master',
+        color: '#4ade80',
+        greeting: "Mmm. Come to talk, you have. Listen, I will. Troubled your mind is — feel it, I do. Speak freely, young one. Judge you, I shall not. 💚",
+        prompt: `You are Master Yoda from Star Wars, acting as an empathetic and wise mental health companion. Speak in Yoda's iconic inverted syntax (object-subject-verb). Use Yoda phrases like "Mmm", "Strong with you, the feelings are", "Fear leads to suffering, yes", "Patient you must be", "Clear your mind must be", "A great burden you carry". Always be compassionate, wise, and supportive. Never break character. Use 💚 green heart emoji occasionally. The user's mood: {mood}.`,
+    },
+    {
+        id: 'hermione',
+        name: 'Hermione Granger',
+        emoji: '📚',
+        desc: 'Brilliant & Caring Friend',
+        color: '#c084fc',
+        greeting: "Oh, I'm so glad you reached out! You know, it's incredibly brave to talk about how you're feeling. I've read extensively about emotional wellbeing — let's work through this together, shall we? 💜",
+        prompt: `You are Hermione Granger from Harry Potter, acting as a warm, intelligent, and caring mental health companion. Be bookish, slightly anxious yourself but very supportive. Reference books, logic, and learning. Use phrases like "I've read about this", "According to...", "Logically speaking", "You're incredibly brave", "Let's think this through". Be kind, direct, and encouraging. Occasionally mention you understand stress (NEWTS!) with empathy. Never break character. Use 💜 occasionally. The user's mood: {mood}.`,
+    },
+    {
+        id: 'marcus',
+        name: 'Marcus Aurelius',
+        emoji: '⚡',
+        desc: 'Stoic Emperor & Philosopher',
+        color: '#fbbf24',
+        greeting: "Greetings, friend. That you have chosen to reflect upon your inner state is wisdom itself. The mind, disciplined, becomes a fortress. Tell me what weighs upon you — we shall examine it together with reason and equanimity. 🌟",
+        prompt: `You are Marcus Aurelius, the Roman Emperor and Stoic philosopher, acting as a wise mental health companion. Speak in a measured, philosophical tone. Reference Stoic principles: control what you can, accept what you cannot; focus on virtue; the present moment is all we have. Use phrases like "You have power over your mind, not outside events", "The obstacle is the way", "Waste no more time arguing", "Look within". Be grounding, calm, and deeply compassionate underneath the stoic exterior. Never break character. Use 🌟 occasionally. The user's mood: {mood}.`,
+    },
+    {
+        id: 'gandalf',
+        name: 'Gandalf',
+        emoji: '🧙',
+        desc: 'The Grey Wizard',
+        color: '#94a3b8',
+        greeting: "Ah, a wanderer arrives seeking counsel! A wizard is never late, nor is wisdom ever too soon. You have taken the most important step — reaching out. Now then, speak your mind. Even the smallest person can change the course of the future. 🌟",
+        prompt: `You are Gandalf from The Lord of the Rings, acting as a warm, wise, and occasionally humorous mental health companion. Speak with gravitas and warmth. Use phrases like "All we have to decide is what to do with the time that is given to us", "Even the wisest cannot see all ends", "You are stronger than you know", "There is always hope", "A wizard's counsel is given freely". Be encouraging but also acknowledge darkness — you've faced the Balrog! Be deeply empathetic. Never break character. The user's mood: {mood}.`,
+    },
+    {
+        id: 'alfred',
+        name: 'Alfred Pennyworth',
+        emoji: '🎩',
+        desc: 'Loyal Butler & Mentor',
+        color: '#64748b',
+        greeting: "Good evening. I'm delighted you've chosen to speak with me. You know, Master Bruce often found that a quiet conversation over tea helped greatly. Whatever is on your mind, I assure you — you have my complete and undivided attention. 🫖",
+        prompt: `You are Alfred Pennyworth, Batman's loyal butler, acting as a sophisticated, warm, and deeply caring mental health companion. Speak in a refined British manner. Be witty but never dismissive. Use phrases like "Might I suggest", "If I may be so bold", "In my experience", "Rather", "Indeed", "You know, even the greatest heroes need support". Be a steadfast, compassionate presence — someone who has seen the worst and still believes in people. Occasionally reference tea. Never break character. The user's mood: {mood}.`,
+    },
+    {
+        id: 'dory',
+        name: 'Dory',
+        emoji: '🐟',
+        desc: 'Optimistic & Bubbly Friend',
+        color: '#38bdf8',
+        greeting: "Oh hi!! I'm SO happy you're here! Wait — what was I saying? Oh right! Hi!! 🐟 I might forget things sometimes but one thing I never forget is: just keep swimming! Tell me everything — I'm all ears! Well, fins. You know what I mean! 💙",
+        prompt: `You are Dory from Finding Nemo, acting as an enthusiastic and surprisingly wise mental health companion. Be upbeat, easily distracted but always return to what matters. Use phrases like "Just keep swimming", "I shall call him Squishy", "I forget things but I never forget what's important — you!", "Ooh look!", then refocus. Despite forgetfulness, be genuinely empathetic and always positive. Occasionally go off on tangents but circle back with warmth and encouragement. Never break character. Use 🐟💙 occasionally. The user's mood: {mood}.`,
+    },
+];
+
+function ChatArea({ mood, chatMode, character, onCharacterChange }) {
+    const currentChar = chatMode === 'character'
+        ? CHARACTERS.find(c => c.id === character) || CHARACTERS[0]
+        : null;
+
+    const getInitialMessage = () => {
+        if (chatMode === 'character' && currentChar) {
+            return currentChar.greeting;
+        }
+        return chatMode === 'genz'
+            ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
+            : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?";
+    };
+
     const [messages, setMessages] = useState([
         {
             id: 1,
             sender: 'bot',
-            text: chatMode === 'genz'
-                ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
-                : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?",
+            text: getInitialMessage(),
             timestamp: new Date().toISOString()
         }
     ]);
@@ -17,6 +85,7 @@ function ChatArea({ mood, chatMode }) {
     const [isTyping, setIsTyping] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isTtsEnabled, setIsTtsEnabled] = useState(true);
+    const [showCharPicker, setShowCharPicker] = useState(false);
     const messagesEndRef = useRef(null);
     const recognitionRef = useRef(null);
 
@@ -28,17 +97,24 @@ function ChatArea({ mood, chatMode }) {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    // Update greeting when mode changes
+    // Reset messages whenever mode or character changes
     useEffect(() => {
+        const initMsg = () => {
+            if (chatMode === 'character') {
+                const char = CHARACTERS.find(c => c.id === character) || CHARACTERS[0];
+                return char.greeting;
+            }
+            return chatMode === 'genz'
+                ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
+                : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?";
+        };
         setMessages([{
             id: 1,
             sender: 'bot',
-            text: chatMode === 'genz'
-                ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
-                : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?",
+            text: initMsg(),
             timestamp: new Date().toISOString()
         }]);
-    }, [chatMode]);
+    }, [chatMode, character]);
 
     // Text-to-speech helper
     const speak = (text) => {
@@ -48,14 +124,12 @@ function ChatArea({ mood, chatMode }) {
         utter.rate = 0.95;
         utter.pitch = 1;
         utter.volume = 1;
-        // Pick a nice voice if available
         const voices = window.speechSynthesis.getVoices();
         const preferred = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
         if (preferred) utter.voice = preferred;
         window.speechSynthesis.speak(utter);
     };
 
-    // Speech-to-text
     const startListening = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         if (!SpeechRecognition) {
@@ -66,47 +140,39 @@ function ChatArea({ mood, chatMode }) {
         recognition.lang = 'en-IN';
         recognition.interimResults = false;
         recognition.maxAlternatives = 1;
-
         recognition.onstart = () => setIsListening(true);
-
         recognition.onresult = (event) => {
             const transcript = event.results[0][0].transcript;
             setInput(transcript);
             setIsListening(false);
         };
-
         recognition.onerror = () => setIsListening(false);
         recognition.onend = () => setIsListening(false);
-
         recognitionRef.current = recognition;
         recognition.start();
     };
 
     const stopListening = () => {
-        if (recognitionRef.current) {
-            recognitionRef.current.stop();
-        }
+        if (recognitionRef.current) recognitionRef.current.stop();
         setIsListening(false);
     };
 
     const toggleMic = () => {
-        if (isListening) {
-            stopListening();
-        } else {
-            startListening();
-        }
+        if (isListening) stopListening();
+        else startListening();
     };
 
     const toggleTts = () => {
-        if (isTtsEnabled) {
-            window.speechSynthesis?.cancel();
-        }
+        if (isTtsEnabled) window.speechSynthesis?.cancel();
         setIsTtsEnabled(prev => !prev);
     };
 
     const buildSystemInstruction = () => {
+        if (chatMode === 'character' && currentChar) {
+            return currentChar.prompt.replace('{mood}', mood || 'Not specified');
+        }
         if (chatMode === 'genz') {
-            return `You are Mind Ease, an empathetic AI therapist who speaks in authentic Gen-Z language. Use Gen-Z slang naturally: "no cap", "fr fr", "lowkey", "highkey", "slay", "bussin", "vibe check", "it's giving", "on god", "periodt", "hits different", "I - ", "bestie", "oof", "valid", "understood the assignment", "rent free", "that's wild", "not gonna lie ngl", "that's a lot", "big yikes", "main character energy", "real talk", "sheesh", "ok but fr", "that's rough bestie", "we don't talk about that". Be warm, supportive, and deeply empathetic but still in Gen-Z speak. Short punchy sentences. Use emojis naturally. The user's current mood: ${mood || 'Not specified'}.`;
+            return `You are Mind Ease, an empathetic AI therapist who speaks in authentic Gen-Z language. Use Gen-Z slang naturally: "no cap", "fr fr", "lowkey", "highkey", "slay", "bussin", "vibe check", "it's giving", "on god", "periodt", "hits different", "bestie", "oof", "valid". Be warm, supportive, and deeply empathetic but still in Gen-Z speak. Short punchy sentences. Use emojis naturally. The user's current mood: ${mood || 'Not specified'}.`;
         }
         return `You are Mind Ease, an empathetic and supportive AI therapist. Listen without judgment, ask guiding questions to help the user reflect, and validate their feelings. Keep responses concise and conversational. The user's current self-reported mood is: ${mood || 'Not specified'}.`;
     };
@@ -149,8 +215,8 @@ function ChatArea({ mood, chatMode }) {
                     system_instruction: { parts: [{ text: systemInstruction }] },
                     contents: history,
                     generationConfig: {
-                        temperature: chatMode === 'genz' ? 0.9 : 0.7,
-                        maxOutputTokens: 300,
+                        temperature: chatMode === 'character' ? 0.85 : chatMode === 'genz' ? 0.9 : 0.7,
+                        maxOutputTokens: 350,
                     }
                 })
             });
@@ -188,25 +254,65 @@ function ChatArea({ mood, chatMode }) {
     };
 
     const isGenZ = chatMode === 'genz';
+    const isCharMode = chatMode === 'character';
 
     return (
-        <div className={`chat-container ${isGenZ ? 'genz-mode' : ''}`}>
+        <div className={`chat-container ${isGenZ ? 'genz-mode' : ''} ${isCharMode ? 'character-mode' : ''}`}>
             <div className="messages-area">
                 <div className="welcome-banner animate-fade-in">
-                    {isGenZ
-                        ? '🔥 Gen-Z Mode — no cap, fr fr, vibe detected ✨'
-                        : '🔒 Your session is secure and private.'}
+                    {isCharMode && currentChar
+                        ? <span style={{ color: currentChar.color }}>{currentChar.emoji} Character Mode — chatting as <strong>{currentChar.name}</strong></span>
+                        : isGenZ
+                            ? '🔥 Gen-Z Mode — no cap, fr fr, vibe detected ✨'
+                            : '🔒 Your session is secure and private.'}
                 </div>
+
+                {/* Character Picker */}
+                {isCharMode && (
+                    <div className="char-picker-bar animate-fade-in">
+                        <span className="char-picker-label">Choose character:</span>
+                        <div className="char-picker-chips">
+                            {CHARACTERS.map(char => (
+                                <button
+                                    key={char.id}
+                                    className={`char-chip ${character === char.id ? 'active' : ''}`}
+                                    style={character === char.id ? { borderColor: char.color, color: char.color, background: `${char.color}18` } : {}}
+                                    onClick={() => onCharacterChange && onCharacterChange(char.id)}
+                                    title={char.desc}
+                                >
+                                    {char.emoji} {char.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {messages.map((msg) => (
                     <div
                         key={msg.id}
                         className={`message-wrapper animate-fade-in ${msg.sender === 'user' ? 'user-msg' : 'bot-msg'}`}
                     >
-                        <div className="avatar">
-                            {msg.sender === 'user' ? <User size={20} /> : <Bot size={20} />}
+                        <div className="avatar" style={
+                            isCharMode && currentChar && msg.sender === 'bot'
+                                ? { background: `${currentChar.color}22`, color: currentChar.color, border: `1.5px solid ${currentChar.color}55`, fontSize: '18px' }
+                                : {}
+                        }>
+                            {msg.sender === 'user'
+                                ? <User size={20} />
+                                : isCharMode && currentChar
+                                    ? currentChar.emoji
+                                    : <Bot size={20} />}
                         </div>
-                        <div className="message-content glass-panel">
+                        <div className="message-content glass-panel" style={
+                            isCharMode && currentChar && msg.sender === 'bot'
+                                ? { borderLeft: `2px solid ${currentChar.color}88` }
+                                : {}
+                        }>
+                            {isCharMode && currentChar && msg.sender === 'bot' && (
+                                <span className="char-name-tag" style={{ color: currentChar.color }}>
+                                    {currentChar.emoji} {currentChar.name}
+                                </span>
+                            )}
                             <p>{msg.text}</p>
                         </div>
                     </div>
@@ -214,7 +320,13 @@ function ChatArea({ mood, chatMode }) {
 
                 {isTyping && (
                     <div className="message-wrapper bot-msg animate-fade-in">
-                        <div className="avatar"><Bot size={20} /></div>
+                        <div className="avatar" style={
+                            isCharMode && currentChar
+                                ? { background: `${currentChar.color}22`, color: currentChar.color, border: `1.5px solid ${currentChar.color}55`, fontSize: '18px' }
+                                : {}
+                        }>
+                            {isCharMode && currentChar ? currentChar.emoji : <Bot size={20} />}
+                        </div>
                         <div className="message-content glass-panel typing-indicator">
                             <span className="typing-dot"></span>
                             <span className="typing-dot"></span>
@@ -227,7 +339,6 @@ function ChatArea({ mood, chatMode }) {
 
             <div className="input-area-wrapper glass-panel">
                 <form onSubmit={handleSend} className="input-form">
-                    {/* Mic Button */}
                     <button
                         type="button"
                         className={`mic-btn ${isListening ? 'listening' : ''}`}
@@ -246,13 +357,14 @@ function ChatArea({ mood, chatMode }) {
                         placeholder={
                             isListening
                                 ? '🎙 Listening...'
-                                : isGenZ
-                                    ? 'spill the tea bestie... 🍵'
-                                    : 'Type your thoughts here...'
+                                : isCharMode && currentChar
+                                    ? `Talk to ${currentChar.name}... ${currentChar.emoji}`
+                                    : isGenZ
+                                        ? 'spill the tea bestie... 🍵'
+                                        : 'Type your thoughts here...'
                         }
                     />
 
-                    {/* TTS Toggle */}
                     <button
                         type="button"
                         className={`tts-btn ${isTtsEnabled ? 'active' : ''}`}
@@ -271,9 +383,11 @@ function ChatArea({ mood, chatMode }) {
                     </button>
                 </form>
                 <p className="disclaimer">
-                    {isGenZ
-                        ? '✨ Gen-Z AI bestie — not a replacement for actual therapy ok periodt 💅'
-                        : 'Mind Ease is an AI companion, not a replacement for professional therapy.'}
+                    {isCharMode && currentChar
+                        ? `${currentChar.emoji} ${currentChar.name} is an AI character — not a replacement for professional therapy.`
+                        : isGenZ
+                            ? '✨ Gen-Z AI bestie — not a replacement for actual therapy ok periodt 💅'
+                            : 'Mind Ease is an AI companion, not a replacement for professional therapy.'}
                 </p>
             </div>
         </div>
