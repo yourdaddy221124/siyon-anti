@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "npx --package node@20 -- npx convex deploy --cmd \"vite build\" --yes",
     "lint": "eslint .",
     "preview": "vite preview"
   },
