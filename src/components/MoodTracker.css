@@ -100,3 +100,17 @@
 .mood-opt-emoji {
     font-size: 1.1rem;
 }
+
+/* ─── Mobile ─── */
+@media (max-width: 480px) {
+    .mood-dropdown {
+        width: 190px;
+        right: 0;
+        left: auto;
+    }
+
+    .mood-trigger {
+        padding: 0.4rem 0.65rem;
+        font-size: 0.78rem;
+    }
+}

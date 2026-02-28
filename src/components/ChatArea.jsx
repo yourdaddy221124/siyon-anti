@@ -1,5 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader, Mic, MicOff, Volume2, VolumeX, ChevronDown } from 'lucide-react';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
 import './ChatArea.css';
 
 const CHARACTERS = [
@@ -60,32 +62,20 @@ const CHARACTERS = [
 ];
 
 function ChatArea({ mood, chatMode, character, onCharacterChange }) {
+    const rawMessages = useQuery(api.messages.list);
+    const sendMessage = useMutation(api.messages.send);
+
+    // Sort messages since Convex might return them in different orders or we want reverse order
+    const messages = [...(rawMessages || [])].sort((a, b) => a.timestamp - b.timestamp);
+
     const currentChar = chatMode === 'character'
         ? CHARACTERS.find(c => c.id === character) || CHARACTERS[0]
         : null;
 
-    const getInitialMessage = () => {
-        if (chatMode === 'character' && currentChar) {
-            return currentChar.greeting;
-        }
-        return chatMode === 'genz'
-            ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
-            : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?";
-    };
-
-    const [messages, setMessages] = useState([
-        {
-            id: 1,
-            sender: 'bot',
-            text: getInitialMessage(),
-            timestamp: new Date().toISOString()
-        }
-    ]);
     const [input, setInput] = useState('');
     const [isTyping, setIsTyping] = useState(false);
     const [isListening, setIsListening] = useState(false);
     const [isTtsEnabled, setIsTtsEnabled] = useState(true);
-    const [showCharPicker, setShowCharPicker] = useState(false);
     const messagesEndRef = useRef(null);
     const recognitionRef = useRef(null);
 
@@ -97,53 +87,23 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
         scrollToBottom();
     }, [messages, isTyping]);
 
-    // Reset messages whenever mode or character changes
-    useEffect(() => {
-        const initMsg = () => {
-            if (chatMode === 'character') {
-                const char = CHARACTERS.find(c => c.id === character) || CHARACTERS[0];
-                return char.greeting;
-            }
-            return chatMode === 'genz'
-                ? "Heyyy bestie 👋 I'm Mind Ease, no cap your safe space fr fr. What's the vibe rn? How you been feeling lowkey? 💙"
-                : "Hi there. I'm Mind Ease. I'm here to listen, completely judgment-free. How are things feeling right now?";
-        };
-        setMessages([{
-            id: 1,
-            sender: 'bot',
-            text: initMsg(),
-            timestamp: new Date().toISOString()
-        }]);
-    }, [chatMode, character]);
-
     // Text-to-speech helper
     const speak = (text) => {
         if (!isTtsEnabled || !window.speechSynthesis) return;
         window.speechSynthesis.cancel();
         const utter = new SpeechSynthesisUtterance(text);
         utter.rate = 0.95;
-        utter.pitch = 1;
-        utter.volume = 1;
-        const voices = window.speechSynthesis.getVoices();
-        const preferred = voices.find(v => v.lang === 'en-IN') || voices.find(v => v.lang.startsWith('en'));
-        if (preferred) utter.voice = preferred;
         window.speechSynthesis.speak(utter);
     };
 
     const startListening = () => {
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-        if (!SpeechRecognition) {
-            alert('Speech recognition is not supported in your browser. Please use Chrome or Edge.');
-            return;
-        }
+        if (!SpeechRecognition) return;
         const recognition = new SpeechRecognition();
         recognition.lang = 'en-IN';
-        recognition.interimResults = false;
-        recognition.maxAlternatives = 1;
         recognition.onstart = () => setIsListening(true);
         recognition.onresult = (event) => {
-            const transcript = event.results[0][0].transcript;
-            setInput(transcript);
+            setInput(event.results[0][0].transcript);
             setIsListening(false);
         };
         recognition.onerror = () => setIsListening(false);
@@ -152,13 +112,8 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
         recognition.start();
     };
 
-    const stopListening = () => {
-        if (recognitionRef.current) recognitionRef.current.stop();
-        setIsListening(false);
-    };
-
     const toggleMic = () => {
-        if (isListening) stopListening();
+        if (isListening) recognitionRef.current?.stop();
         else startListening();
     };
 
@@ -172,9 +127,9 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
             return currentChar.prompt.replace('{mood}', mood || 'Not specified');
         }
         if (chatMode === 'genz') {
-            return `You are Mind Ease, an empathetic AI therapist who speaks in authentic Gen-Z language. Use Gen-Z slang naturally: "no cap", "fr fr", "lowkey", "highkey", "slay", "bussin", "vibe check", "it's giving", "on god", "periodt", "hits different", "bestie", "oof", "valid". Be warm, supportive, and deeply empathetic but still in Gen-Z speak. Short punchy sentences. Use emojis naturally. The user's current mood: ${mood || 'Not specified'}.`;
+            return `You are Mind Ease, an empathetic AI therapist who speaks in authentic Gen-Z language. Use Gen-Z slang naturally. The user's current mood: ${mood || 'Not specified'}.`;
         }
-        return `You are Mind Ease, an empathetic and supportive AI therapist. Listen without judgment, ask guiding questions to help the user reflect, and validate their feelings. Keep responses concise and conversational. The user's current self-reported mood is: ${mood || 'Not specified'}.`;
+        return `You are Mind Ease, an empathetic and supportive AI therapist. The user's current self-reported mood is: ${mood || 'Not specified'}.`;
     };
 
     const handleSend = async (e) => {
@@ -182,72 +137,45 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
         if (!input.trim()) return;
 
         const userText = input.trim();
-        const userMsg = {
-            id: Date.now(),
-            sender: 'user',
-            text: userText,
-            timestamp: new Date().toISOString()
-        };
-
-        const currentMessages = [...messages, userMsg];
-        setMessages(currentMessages);
         setInput('');
         setIsTyping(true);
 
         try {
+            await sendMessage({ text: userText, sender: 'user' });
+
             const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-
-            if (!apiKey || apiKey === 'your_gemini_api_key_here') {
-                throw new Error("Missing Gemini API Key. Please add VITE_GEMINI_API_KEY to your .env.local file.");
-            }
-
-            const history = currentMessages.map(msg => ({
+            const history = messages.map(msg => ({
                 role: msg.sender === 'user' ? 'user' : 'model',
                 parts: [{ text: msg.text }]
             }));
+            history.push({ role: 'user', parts: [{ text: userText }] });
 
             const systemInstruction = buildSystemInstruction();
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     system_instruction: { parts: [{ text: systemInstruction }] },
                     contents: history,
                     generationConfig: {
-                        temperature: chatMode === 'character' ? 0.85 : chatMode === 'genz' ? 0.9 : 0.7,
+                        temperature: 0.8,
                         maxOutputTokens: 350,
                     }
                 })
             });
 
-            if (!response.ok) {
-                const errData = await response.json().catch(() => ({}));
-                throw new Error(errData.error?.message || `API request failed with status ${response.status}`);
-            }
+            if (!response.ok) throw new Error("API request failed");
 
             const data = await response.json();
-            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now. Can you try again?";
+            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now.";
 
-            const botMsg = {
-                id: Date.now() + 1,
-                sender: 'bot',
-                text: botText,
-                timestamp: new Date().toISOString()
-            };
-
-            setMessages(prev => [...prev, botMsg]);
+            await sendMessage({ text: botText, sender: 'bot' });
             speak(botText);
 
         } catch (error) {
-            console.error("Gemini API Error:", error);
-            const errorMsg = {
-                id: Date.now() + 1,
-                sender: 'bot',
-                text: `[System]: I encountered an error: ${error.message}`,
-                timestamp: new Date().toISOString()
-            };
-            setMessages(prev => [...prev, errorMsg]);
+            console.error("Error:", error);
+            await sendMessage({ text: `[System]: I encountered an error: ${error.message}`, sender: 'bot' });
         } finally {
             setIsTyping(false);
         }
@@ -267,7 +195,6 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                             : '🔒 Your session is secure and private.'}
                 </div>
 
-                {/* Character Picker */}
                 {isCharMode && (
                     <div className="char-picker-bar animate-fade-in">
                         <span className="char-picker-label">Choose character:</span>
@@ -289,7 +216,7 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
 
                 {messages.map((msg) => (
                     <div
-                        key={msg.id}
+                        key={msg._id}
                         className={`message-wrapper animate-fade-in ${msg.sender === 'user' ? 'user-msg' : 'bot-msg'}`}
                     >
                         <div className="avatar" style={

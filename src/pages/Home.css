@@ -306,6 +306,7 @@
     border: 1px solid transparent;
     background: var(--grad-primary) border-box;
     -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
     -webkit-mask-composite: destination-out;
     mask-composite: exclude;
     opacity: 0;
@@ -543,21 +544,104 @@
     }
 }
 
-@media (max-width: 600px) {
-    .nav-links {
-        gap: 0.25rem;
-    }
+@media (max-width: 640px) {
 
+    /* Navbar: hide text nav links, keep brand + CTA */
     .nav-link {
         display: none;
     }
 
+    .navbar {
+        padding: 0.75rem 1.1rem;
+    }
+
+    .nav-brand {
+        font-size: 1.1rem;
+    }
+
+    /* Hero */
+    .hero-section {
+        padding: 2rem 1.1rem 2.5rem;
+        gap: 2rem;
+    }
+
+    .hero-title {
+        font-size: clamp(2rem, 8vw, 2.8rem);
+    }
+
+    .hero-description {
+        font-size: 0.95rem;
+        margin-bottom: 1.8rem;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .hero-actions .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Feature cards */
     .hero-visuals {
         grid-template-columns: 1fr;
     }
 
+    .feature-card.card-1 {
+        grid-column: unset;
+    }
+
+    /* Sections */
+    .therapists-section,
+    .reviews-section {
+        padding: 3rem 1.1rem;
+    }
+
+    .section-header {
+        margin-bottom: 2rem;
+    }
+
+    .section-subtitle {
+        font-size: 0.9rem;
+    }
+
+    /* Single column grids */
     .therapists-grid,
     .reviews-grid {
         grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    /* Therapist cards */
+    .therapist-card {
+        padding: 1.3rem;
+    }
+
+    /* Reviews */
+    .review-card {
+        padding: 1.2rem;
+    }
+
+    /* Footer */
+    .footer {
+        padding: 1.5rem 1rem;
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 400px) {
+    .hero-title {
+        font-size: 1.9rem;
+    }
+
+    .nav-brand {
+        font-size: 1rem;
+    }
+
+    .btn-lg {
+        padding: 0.8rem 1.4rem;
+        font-size: 0.95rem;
     }
 }

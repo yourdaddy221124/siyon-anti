@@ -1,21 +1,30 @@
 import React, { useState } from 'react';
 import { X, CreditCard, Loader, CheckCircle } from 'lucide-react';
+import { useData } from '../context/DataContext';
 import './CheckoutOverlay.css';
 
 function CheckoutOverlay({ isOpen, planName, planPrice, onClose }) {
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const { upgradeSubscription } = useData();
 
     if (!isOpen) return null;
 
-    const handleCheckout = (e) => {
+    const handleCheckout = async (e) => {
         e.preventDefault();
         setIsProcessing(true);
 
         // Simulate network request to payment gateway
-        setTimeout(() => {
+        setTimeout(async () => {
             setIsProcessing(false);
             setIsSuccess(true);
+
+            // Update Convex database
+            try {
+                await upgradeSubscription(planName);
+            } catch (error) {
+                console.error("Failed to upgrade subscription:", error);
+            }
 
             // Auto close after success
             setTimeout(() => {

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
 import { useAuth } from '../../context/AuthContext';
+import { useMutation } from 'convex/react';
+import { api } from '../../convex/_generated/api';
 import './Auth.css';
 
 function Register() {
@@ -13,7 +14,8 @@ function Register() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
-    const { user, loading } = useAuth();
+    const { user, loading, signIn: setAuthUser } = useAuth();
+    const createProfile = useMutation(api.users.createProfile);
 
     // Redirect if already logged in
     if (!loading && user) {
@@ -33,41 +35,29 @@ function Register() {
         }
 
         try {
-            const { data, error } = await supabase.auth.signUp({
-                email,
-                password,
-                options: {
-                    data: {
-                        full_name: name
-                    }
-                }
+            // Create profile in Convex including password
+            const userData = await createProfile({
+                email: email,
+                password: password,
+                full_name: name,
+                subscription_status: 'Active',
+                subscription_tier: 'Free'
             });
 
-            if (error) throw error;
-
-            // Check if user already exists (Supabase returns user but with identities=[])
-            if (data?.user && data.user.identities && data.user.identities.length === 0) {
-                setError('An account with this email already exists. Please sign in instead.');
-                return;
-            }
-
-            // Check if email confirmation is required
-            if (data?.user && !data.session) {
-                setSuccess('Account created! Please check your email and click the confirmation link to activate your account.');
-            } else if (data?.session) {
-                // Email confirmation disabled — logged in immediately
+            if (userData) {
+                // Fetch the full object for context
+                setAuthUser({
+                    _id: userData,
+                    email: email,
+                    full_name: name,
+                    subscription_status: 'Active',
+                    subscription_tier: 'Free'
+                });
                 navigate('/chat');
             }
         } catch (error) {
-            if (error.message === 'Failed to fetch' || error.message.includes('NetworkError') || error.message.includes('network') || error.name === 'TypeError') {
-                setError('Network error — cannot reach the server. Please check your internet connection and try again.');
-            } else if (error.message.includes('rate limit') || error.message.includes('over_email_send_rate_limit')) {
-                setError('Too many signup attempts. Please wait a few minutes and try again.');
-            } else if (error.message.includes('User already registered')) {
-                setError('An account with this email already exists. Please sign in instead.');
-            } else {
-                setError(error.message);
-            }
+            console.error("Registration error:", error);
+            setError(error.message || 'Failed to create account. Please try again.');
         } finally {
             setIsLoading(false);
         }

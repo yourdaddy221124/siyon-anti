@@ -1,39 +1,37 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
-    const [session, setSession] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // Get initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            setLoading(false);
-        });
-
-        // Listen for auth state changes (login, logout, token refresh)
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(
-            (_event, session) => {
-                setSession(session);
-                setUser(session?.user ?? null);
-                setLoading(false);
+        // Load user from localStorage on mount
+        const savedUser = localStorage.getItem('mindease_user');
+        if (savedUser) {
+            try {
+                setUser(JSON.parse(savedUser));
+            } catch (e) {
+                console.error("Failed to parse saved user", e);
+                localStorage.removeItem('mindease_user');
             }
-        );
-
-        return () => subscription.unsubscribe();
+        }
+        setLoading(false);
     }, []);
 
-    const signOut = async () => {
-        await supabase.auth.signOut();
+    const signIn = (userData) => {
+        setUser(userData);
+        localStorage.setItem('mindease_user', JSON.stringify(userData));
+    };
+
+    const signOut = () => {
+        setUser(null);
+        localStorage.removeItem('mindease_user');
     };
 
     return (
-        <AuthContext.Provider value={{ user, session, loading, signOut }}>
+        <AuthContext.Provider value={{ user, loading, signIn, signOut }}>
             {children}
         </AuthContext.Provider>
     );

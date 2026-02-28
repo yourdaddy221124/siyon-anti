@@ -11,6 +11,9 @@ node_modules
 dist
 dist-ssr
 *.local
+convex_debug.txt
+convex_last_chance.txt
+convex_output.txt
 
 # Editor directories and files
 .vscode/*

@@ -1,69 +1,49 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../lib/supabase';
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { useAuth } from './AuthContext';
 
 const DataContext = createContext();
 
 export const DataProvider = ({ children }) => {
-    const [users, setUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { user: authUser } = useAuth();
+    const rawUsers = useQuery(api.users.getProfiles);
+    const currentUserProfile = useQuery(api.users.getByEmail, authUser?.email ? { email: authUser.email } : "skip");
 
-    const fetchUsers = async () => {
-        try {
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .order('created_at', { ascending: false });
+    const updateStatsMutation = useMutation(api.users.updateStatus);
+    const updateTierMutation = useMutation(api.users.updateTier);
+    const deleteUserMutation = useMutation(api.users.deleteUser);
 
-            if (error) throw error;
-            setUsers(data || []);
-        } catch (error) {
-            console.error('Error fetching users:', error.message);
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    // Fallback while loading
+    const users = (rawUsers || []).map(user => ({
+        ...user,
+        id: user._id, // Normalize ID if needed by UI
+    }));
+    const loading = rawUsers === undefined || (authUser && currentUserProfile === undefined);
 
     const toggleUserStatus = async (userId, currentStatus) => {
         const newStatus = currentStatus === 'Active' ? 'Canceled' : 'Active';
-
-        // Optimistic UI update
-        setUsers(prevUsers =>
-            prevUsers.map(u => u.id === userId ? { ...u, subscription_status: newStatus } : u)
-        );
-
         try {
-            const { error } = await supabase
-                .from('user_profiles')
-                .update({ subscription_status: newStatus })
-                .eq('id', userId);
-
-            if (error) throw error;
+            await updateStatsMutation({ id: userId, status: newStatus });
         } catch (error) {
             console.error('Error toggling status:', error.message);
-            // Revert on error
-            fetchUsers();
+        }
+    };
+
+    const upgradeSubscription = async (tier) => {
+        if (!currentUserProfile) return;
+        try {
+            await updateTierMutation({ id: currentUserProfile._id, tier });
+        } catch (error) {
+            console.error('Error upgrading:', error.message);
         }
     };
 
     const deleteUser = async (userId) => {
-        // Optimistic UI update
-        setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
-
         try {
-            const { error } = await supabase
-                .from('user_profiles')
-                .delete()
-                .eq('id', userId);
-
-            if (error) throw error;
+            await deleteUserMutation({ id: userId });
         } catch (error) {
             console.error('Error deleting user:', error.message);
-            // Revert on error
-            fetchUsers();
         }
     };
 
@@ -82,7 +62,7 @@ export const DataProvider = ({ children }) => {
     };
 
     return (
-        <DataContext.Provider value={{ users, loading, toggleUserStatus, deleteUser, getDynamicStats }}>
+        <DataContext.Provider value={{ users, loading, currentUserProfile, toggleUserStatus, upgradeSubscription, deleteUser, getDynamicStats }}>
             {children}
         </DataContext.Provider>
     );
