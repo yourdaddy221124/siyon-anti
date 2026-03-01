@@ -165,10 +165,23 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                 })
             });
 
-            if (!response.ok) throw new Error("API request failed");
+            let botText = "";
 
-            const data = await response.json();
-            const botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now.";
+            if (!response.ok) {
+                if (response.status === 429) {
+                    console.warn("Gemini Quota Exceeded. Falling back to free secondary API...");
+                    const fallbackPrompt = `${systemInstruction}\n\nUser: ${userText}\n\nRespond briefly as your character:`;
+                    const fallbackRes = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}`);
+
+                    if (!fallbackRes.ok) throw new Error("API request failed and Fallback API also failed.");
+                    botText = await fallbackRes.text();
+                } else {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+            } else {
+                const data = await response.json();
+                botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now.";
+            }
 
             await sendMessage({ text: botText, sender: 'bot' });
             speak(botText);
