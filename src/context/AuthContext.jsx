@@ -73,10 +73,12 @@ export const AuthProvider = ({ children }) => {
             const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
 
             if (error) {
-                if (error.code === 'PGRST116') {
+                if (error.timeout) {
+                    console.warn("AuthContext: Profile fetch timed out.");
+                } else if (error.code === 'PGRST116') {
                     console.log("AuthContext: Profile not found in database yet.");
-                } else if (error.message.includes("406") || error.code === "406") {
-                    console.error("AuthContext: 406 Error - Possible database schema or permission issue.");
+                } else if (error.message && (error.message.includes("406") || error.code === "406")) {
+                    console.error("AuthContext: 406 Error - Possible database schema issue.");
                 } else {
                     console.error("AuthContext: Profile fetch error", error);
                 }
@@ -84,6 +86,7 @@ export const AuthProvider = ({ children }) => {
                 console.log("AuthContext: Profile fetched successfully:", data);
             }
 
+            // ALWAYS set user even if profile fetch failed, so the app can continue
             setUser({
                 id: userId,
                 email: email,
@@ -91,6 +94,10 @@ export const AuthProvider = ({ children }) => {
             });
         } catch (e) {
             console.error("AuthContext: unexpected error in fetchProfile", e);
+            setUser({
+                id: userId,
+                email: email
+            });
         } finally {
             console.log("AuthContext: Setting loading to false");
             setLoading(false);
