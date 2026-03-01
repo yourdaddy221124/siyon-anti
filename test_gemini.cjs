@@ -1,6 +1,6 @@
 const https = require('https');
 
-const apiKey = 'AIzaSyCFmFiop32zzhLDa0foq9eaZhrmkJenVAU';
+const apiKey = 'AIzaSyC3iY7EVD3Su7GOkeGEH07y3bUXW2m0kU4';
 const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
 
 const data = JSON.stringify({
