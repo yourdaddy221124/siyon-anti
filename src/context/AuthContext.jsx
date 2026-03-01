@@ -41,12 +41,13 @@ export const AuthProvider = ({ children }) => {
         initializeAuth();
 
         // Listen for auth changes
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
             console.log("AuthContext: onAuthStateChange event:", event, "User:", session?.user?.email);
 
             if (session?.user) {
-                setLoading(true);
-                await fetchProfile(session.user.id, session.user.email);
+                // We sync the user object but DON'T set loading(true) again
+                // This prevents re-blocking the entire app if profile fetch is slow
+                fetchProfile(session.user.id, session.user.email);
             } else {
                 setUser(null);
                 setLoading(false);
@@ -58,12 +59,18 @@ export const AuthProvider = ({ children }) => {
 
     const fetchProfile = async (userId, email) => {
         console.log("AuthContext: Fetching profile for", email);
+
+        // Race timeout for profile fetch (3s max)
+        const profilePromise = supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+
+        const timeoutPromise = new Promise((resolve) => setTimeout(() => resolve({ error: { timeout: true } }), 3000));
+
         try {
-            const { data, error } = await supabase
-                .from('user_profiles')
-                .select('*')
-                .eq('id', userId)
-                .single();
+            const { data, error } = await Promise.race([profilePromise, timeoutPromise]);
 
             if (error) {
                 if (error.code === 'PGRST116') {

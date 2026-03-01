@@ -55,8 +55,8 @@ function Register() {
                 }
 
                 // 2. Create the user profile in the public user_profiles table
-                // Note: This requires a session to pass RLS
-                const { error: profileError } = await supabase
+                // We wrap this in a timeout to ensure the UI never hangs
+                const profilePromise = supabase
                     .from('user_profiles')
                     .upsert([
                         {
@@ -67,6 +67,9 @@ function Register() {
                             subscription_tier: 'Free',
                         }
                     ]);
+
+                const profileTimeout = new Promise((resolve) => setTimeout(() => resolve({ error: { timeout: true } }), 4000));
+                const { error: profileError } = await Promise.race([profilePromise, profileTimeout]);
 
                 if (profileError) {
                     console.error("Profile creation error:", profileError);
