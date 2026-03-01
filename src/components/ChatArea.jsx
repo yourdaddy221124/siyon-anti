@@ -216,48 +216,42 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                 sender: 'user'
             }]);
 
-            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
+            const geminiApiKey = import.meta.env.VITE_GEMINI_API_KEY;
             const systemInstruction = buildSystemInstruction();
 
-            const openAiHistory = [
-                { role: "system", content: systemInstruction },
-                ...messages.map(msg => ({
-                    role: msg.sender === 'user' ? 'user' : 'assistant',
-                    content: msg.text
-                })),
-                { role: "user", content: userText }
-            ];
+            // Format history for Gemini
+            // Note: Gemini expects 'user' and 'model' roles
+            const geminiHistory = messages.map(msg => ({
+                role: msg.sender === 'user' ? 'user' : 'model',
+                parts: [{ text: msg.text }]
+            }));
 
-            const response = await fetch("https://api.openai.com/v1/chat/completions", {
+            const response = await fetch(`https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    model: "gpt-4o-mini",
-                    messages: openAiHistory,
-                    temperature: 0.8,
-                    max_tokens: 350
+                    contents: [
+                        ...geminiHistory,
+                        { role: "user", parts: [{ text: `${systemInstruction}\n\nUser Message: ${userText}` }] }
+                    ],
+                    generationConfig: {
+                        temperature: 0.8,
+                        maxOutputTokens: 500
+                    }
                 })
             });
 
             let botText = "";
 
             if (!response.ok) {
-                if (response.status === 429) {
-                    console.warn("OpenAI Quota Exceeded. Falling back to free secondary API...");
-                    const fallbackPrompt = `${systemInstruction}\n\nUser: ${userText}\n\nRespond briefly as your character:`;
-                    const fallbackRes = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}`);
-
-                    if (!fallbackRes.ok) throw new Error("API request failed and Fallback API also failed.");
-                    botText = await fallbackRes.text();
-                } else {
-                    throw new Error(`API request failed with status ${response.status}`);
-                }
+                const errorData = await response.json();
+                console.error("Gemini API Error:", errorData);
+                throw new Error(errorData.error?.message || `Gemini API failed with status ${response.status}`);
             } else {
                 const data = await response.json();
-                botText = data.choices?.[0]?.message?.content || "I'm having trouble understanding right now.";
+                botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble thinking right now.";
             }
 
             // Send bot response to Supabase
