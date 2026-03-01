@@ -143,25 +143,29 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
         try {
             await sendMessage({ text: userText, sender: 'user' });
 
-            const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-            const history = messages.map(msg => ({
-                role: msg.sender === 'user' ? 'user' : 'model',
-                parts: [{ text: msg.text }]
-            }));
-            history.push({ role: 'user', parts: [{ text: userText }] });
-
+            const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
             const systemInstruction = buildSystemInstruction();
 
-            const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+            const openAiHistory = [
+                { role: "system", content: systemInstruction },
+                ...messages.map(msg => ({
+                    role: msg.sender === 'user' ? 'user' : 'assistant',
+                    content: msg.text
+                })),
+                { role: "user", content: userText }
+            ];
+
+            const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
                 body: JSON.stringify({
-                    system_instruction: { parts: [{ text: systemInstruction }] },
-                    contents: history,
-                    generationConfig: {
-                        temperature: 0.8,
-                        maxOutputTokens: 350,
-                    }
+                    model: "gpt-4o-mini",
+                    messages: openAiHistory,
+                    temperature: 0.8,
+                    max_tokens: 350
                 })
             });
 
@@ -169,7 +173,7 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
 
             if (!response.ok) {
                 if (response.status === 429) {
-                    console.warn("Gemini Quota Exceeded. Falling back to free secondary API...");
+                    console.warn("OpenAI Quota Exceeded. Falling back to free secondary API...");
                     const fallbackPrompt = `${systemInstruction}\n\nUser: ${userText}\n\nRespond briefly as your character:`;
                     const fallbackRes = await fetch(`https://text.pollinations.ai/prompt/${encodeURIComponent(fallbackPrompt)}`);
 
@@ -180,7 +184,7 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                 }
             } else {
                 const data = await response.json();
-                botText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble understanding right now.";
+                botText = data.choices?.[0]?.message?.content || "I'm having trouble understanding right now.";
             }
 
             await sendMessage({ text: botText, sender: 'bot' });
