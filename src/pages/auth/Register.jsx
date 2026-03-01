@@ -39,7 +39,12 @@ function Register() {
                 password,
             });
 
-            if (authError) throw authError;
+            if (authError) {
+                if (authError.message.toLowerCase().includes("fetch")) {
+                    throw new Error("Cannot connect to server. Did you add the Supabase URL/Key to Vercel?");
+                }
+                throw authError;
+            }
 
             if (authData.user) {
                 // If there's no session, it means email confirmation is enabled

@@ -29,7 +29,12 @@ function Login() {
                 password,
             });
 
-            if (authError) throw authError;
+            if (authError) {
+                if (authError.message.toLowerCase().includes("fetch")) {
+                    throw new Error("Cannot connect to server. Ensure VITE_SUPABASE_URL is set in Vercel.");
+                }
+                throw authError;
+            }
 
             navigate('/chat');
         } catch (error) {

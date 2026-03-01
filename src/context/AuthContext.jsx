@@ -11,28 +11,30 @@ export const AuthProvider = ({ children }) => {
         console.log("AuthContext: Initializing...");
 
         const initializeAuth = async () => {
+            console.log("AuthContext: Starting initialization...");
             const timeout = setTimeout(() => {
-                console.warn("AuthContext: Initialization timed out after 5s. Forcing loading to false.");
-                setLoading(false);
-            }, 5000);
+                if (loading) {
+                    console.warn("AuthContext: Initialization timed out. Forcing load state...");
+                    setLoading(false);
+                }
+            }, 8000); // 8s safety timeout
 
             try {
                 const { data: { session }, error } = await supabase.auth.getSession();
-                clearTimeout(timeout);
-                console.log("AuthContext: getSession result", { hasSession: !!session, error });
-
                 if (error) throw error;
 
                 if (session?.user) {
+                    console.log("AuthContext: Session found for", session.user.email);
                     await fetchProfile(session.user.id, session.user.email);
                 } else {
-                    console.log("AuthContext: No initial session found.");
+                    console.log("AuthContext: No initial session.");
                     setLoading(false);
                 }
             } catch (err) {
-                clearTimeout(timeout);
-                console.error("AuthContext: Initialization failed", err);
+                console.error("AuthContext: Init Error", err);
                 setLoading(false);
+            } finally {
+                clearTimeout(timeout);
             }
         };
 
