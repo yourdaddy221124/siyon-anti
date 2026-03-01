@@ -2,9 +2,11 @@ import React, { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import ChatArea from '../components/ChatArea';
 import MoodTracker from '../components/MoodTracker';
+import { useAuth } from '../context/AuthContext';
 import './Chat.css';
 
 function Chat() {
+    const { user } = useAuth();
     const [sidebarOpen, setSidebarOpen] = useState(true);
     const [currentMood, setCurrentMood] = useState('Neutral');
     const [chatMode, setChatMode] = useState('classic'); // 'classic' | 'genz' | 'character'

@@ -67,18 +67,20 @@ export const AuthProvider = ({ children }) => {
 
             if (error) {
                 if (error.code === 'PGRST116') {
-                    console.log("AuthContext: Profile not found in database yet (normal for first-time signup).");
+                    console.log("AuthContext: Profile not found in database yet.");
+                } else if (error.message.includes("406") || error.code === "406") {
+                    console.error("AuthContext: 406 Error - Possible database schema or permission issue.");
                 } else {
                     console.error("AuthContext: Profile fetch error", error);
                 }
+            } else {
+                console.log("AuthContext: Profile fetched successfully:", data);
             }
-
-            console.log("AuthContext: Profile fetched successfully:", data);
 
             setUser({
                 id: userId,
                 email: email,
-                ...data
+                ...(data || {})
             });
         } catch (e) {
             console.error("AuthContext: unexpected error in fetchProfile", e);
