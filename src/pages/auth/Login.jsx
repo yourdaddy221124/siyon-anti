@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Mail, Lock, AlertCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useMutation } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
+import { supabase } from '../../lib/supabase';
 import './Auth.css';
 
 function Login() {
@@ -12,8 +11,7 @@ function Login() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const navigate = useNavigate();
-    const { user, loading, signIn: setAuthUser } = useAuth();
-    const convexSignIn = useMutation(api.users.signIn);
+    const { user, loading } = useAuth();
 
     // Redirect if already logged in
     if (!loading && user) {
@@ -26,13 +24,14 @@ function Login() {
         setError('');
 
         try {
-            const userData = await convexSignIn({ email, password });
-            if (userData) {
-                setAuthUser(userData);
-                navigate('/chat');
-            } else {
-                setError('Incorrect email or password. Please try again.');
-            }
+            const { error: authError } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
+
+            if (authError) throw authError;
+
+            navigate('/chat');
         } catch (error) {
             console.error("Login error:", error);
             setError(error.message || 'Failed to sign in. Please check your connection.');

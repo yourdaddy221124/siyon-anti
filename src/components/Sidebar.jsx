@@ -15,11 +15,7 @@ function Sidebar({ isOpen, toggleSidebar }) {
         await signOut();
         navigate('/login');
     };
-    const recentChats = [
-        { id: 1, title: 'Processing anxiety' },
-        { id: 2, title: 'Reflection on work' },
-        { id: 3, title: 'Morning check-in' },
-    ];
+    const recentChats = []; // Removed hardcoded chats to prevent cross-user confusion
 
     return (
         <>
@@ -40,14 +36,20 @@ function Sidebar({ isOpen, toggleSidebar }) {
                 <div className="sidebar-content">
                     <div className="sidebar-section">
                         <h3 className="section-title">Recent Chats</h3>
-                        <ul className="chat-list">
-                            {recentChats.map((chat) => (
-                                <li key={chat.id} className="chat-item">
-                                    <MessageSquare size={16} />
-                                    <span>{chat.title}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        {recentChats.length > 0 ? (
+                            <ul className="chat-list">
+                                {recentChats.map((chat) => (
+                                    <li key={chat.id} className="chat-item">
+                                        <MessageSquare size={16} />
+                                        <span>{chat.title}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <div className="empty-chats">
+                                <p>No recent chats found.</p>
+                            </div>
+                        )}
                     </div>
                 </div>
 
@@ -62,9 +64,15 @@ function Sidebar({ isOpen, toggleSidebar }) {
                         <Settings size={18} /> Settings
                     </button>
                     {user && (
-                        <button className="sidebar-link border-none" onClick={handleLogout} style={{ color: '#f87171' }}>
-                            <LogOut size={18} /> Sign Out
-                        </button>
+                        <div className="user-profile-badge">
+                            <div className="user-info">
+                                <span className="user-email">{user.email}</span>
+                                <span className="user-status">Online</span>
+                            </div>
+                            <button className="logout-btn" onClick={handleLogout} title="Sign Out">
+                                <LogOut size={18} />
+                            </button>
+                        </div>
                     )}
                 </div>
             </aside>

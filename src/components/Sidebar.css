@@ -204,6 +204,87 @@
     color: #fde68a;
 }
 
+/* ─── User Profile & Logout ─── */
+.user-profile-badge {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 0.9rem;
+    margin-top: 0.5rem;
+    background: var(--glass-1);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    transition: all 0.3s var(--ease-smooth);
+}
+
+.user-profile-badge:hover {
+    background: var(--glass-2);
+    border-color: rgba(124, 58, 237, 0.3);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.user-email {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.user-status {
+    font-size: 0.725rem;
+    color: #10b981;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.user-status::before {
+    content: '';
+    width: 6px;
+    height: 6px;
+    background: #10b981;
+    border-radius: 50%;
+    box-shadow: 0 0 8px #10b981;
+}
+
+.logout-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #f87171;
+    display: grid;
+    place-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #ef4444;
+    color: white;
+    transform: scale(1.05);
+}
+
+/* ─── Empty State ─── */
+.empty-chats {
+    padding: 2rem 1rem;
+    text-align: center;
+}
+
+.empty-chats p {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
 /* ─── Mobile Responsive ─── */
 @media (max-width: 768px) {
 

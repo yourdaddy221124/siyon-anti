@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Send, Bot, User, Loader, Mic, MicOff, Volume2, VolumeX, ChevronDown } from 'lucide-react';
-import { useQuery, useMutation } from "convex/react";
-import { api } from "../../convex/_generated/api";
+import { supabase } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import './ChatArea.css';
 
 const CHARACTERS = [
@@ -62,11 +62,8 @@ const CHARACTERS = [
 ];
 
 function ChatArea({ mood, chatMode, character, onCharacterChange }) {
-    const rawMessages = useQuery(api.messages.list);
-    const sendMessage = useMutation(api.messages.send);
-
-    // Sort messages since Convex might return them in different orders or we want reverse order
-    const messages = [...(rawMessages || [])].sort((a, b) => a.timestamp - b.timestamp);
+    const { user } = useAuth();
+    const [messages, setMessages] = useState([]);
 
     const currentChar = chatMode === 'character'
         ? CHARACTERS.find(c => c.id === character) || CHARACTERS[0]
@@ -82,6 +79,77 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     };
+
+    // Supabase generic fetch and realtime subscribe
+    useEffect(() => {
+        if (!user) {
+            setMessages([]);
+            return;
+        }
+
+        const fetchMessages = async () => {
+            const { data, error } = await supabase
+                .from('messages')
+                .select('*')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: true });
+
+            if (!error && data) {
+                setMessages(data);
+            }
+        };
+
+        fetchMessages();
+
+        const subscription = supabase
+            .channel(`user_messages_${user.id}`) // Unique channel per user
+            .on('postgres_changes', {
+                event: 'INSERT',
+                schema: 'public',
+                table: 'messages',
+                filter: `user_id=eq.${user.id}`
+            }, payload => {
+                // Prevent duplicate messages if state already updated
+                setMessages(prev => {
+                    if (prev.find(m => m.id === payload.new.id)) return prev;
+                    return [...prev, payload.new];
+                });
+            })
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(subscription);
+        };
+    }, [user?.id]);
+
+    // Trigger initial greeting if chat is empty
+    useEffect(() => {
+        if (!user || messages.length > 0 || isTyping) return;
+
+        const sendGreeting = async () => {
+            let greetingText = "";
+
+            if (chatMode === 'character' && currentChar) {
+                greetingText = currentChar.greeting;
+            } else if (chatMode === 'genz') {
+                greetingText = "Hey bestie! ✨ I'm Mind Ease, your AI therapist but like, the chill version. No cap, I'm here for all the tea and the vibes. How's your mental health faring today? Sending good energy! 💖💅";
+            } else {
+                greetingText = "Hello there. I'm Mind Ease, your AI mental health companion. I'm here to listen and support you in a safe, non-judgmental space. How are you feeling today?";
+            }
+
+            // Small delay for natural feel
+            setTimeout(async () => {
+                const { error } = await supabase.from('messages').insert([{
+                    user_id: user.id,
+                    text: greetingText,
+                    sender: 'bot'
+                }]);
+                if (!error) speak(greetingText);
+            }, 600);
+        };
+
+        sendGreeting();
+    }, [user?.id, messages.length, chatMode, character]);
 
     useEffect(() => {
         scrollToBottom();
@@ -134,14 +202,19 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
 
     const handleSend = async (e) => {
         e.preventDefault();
-        if (!input.trim()) return;
+        if (!input.trim() || !user) return;
 
         const userText = input.trim();
         setInput('');
         setIsTyping(true);
 
         try {
-            await sendMessage({ text: userText, sender: 'user' });
+            // Send user message to Supabase
+            await supabase.from('messages').insert([{
+                user_id: user.id,
+                text: userText,
+                sender: 'user'
+            }]);
 
             const apiKey = import.meta.env.VITE_OPENAI_API_KEY;
             const systemInstruction = buildSystemInstruction();
@@ -187,16 +260,27 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                 botText = data.choices?.[0]?.message?.content || "I'm having trouble understanding right now.";
             }
 
-            await sendMessage({ text: botText, sender: 'bot' });
+            // Send bot response to Supabase
+            await supabase.from('messages').insert([{
+                user_id: user.id,
+                text: botText,
+                sender: 'bot'
+            }]);
+
             speak(botText);
 
         } catch (error) {
             console.error("Error:", error);
-            await sendMessage({ text: `[System]: I encountered an error: ${error.message}`, sender: 'bot' });
+            await supabase.from('messages').insert([{
+                user_id: user.id,
+                text: `[System]: I encountered an error: ${error.message}`,
+                sender: 'bot'
+            }]);
         } finally {
             setIsTyping(false);
         }
     };
+
 
     const isGenZ = chatMode === 'genz';
     const isCharMode = chatMode === 'character';
@@ -209,7 +293,14 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
                         ? <span style={{ color: currentChar.color }}>{currentChar.emoji} Character Mode — chatting as <strong>{currentChar.name}</strong></span>
                         : isGenZ
                             ? '🔥 Gen-Z Mode — no cap, fr fr, vibe detected ✨'
-                            : '🔒 Your session is secure and private.'}
+                            : (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}>
+                                    <span>🔒 Your session is secure and private.</span>
+                                    <span style={{ opacity: 0.6, fontSize: '0.85em', borderLeft: '1px solid currentColor', paddingLeft: '8px' }}>
+                                        Logged in as <strong>{user?.email}</strong>
+                                    </span>
+                                </div>
+                            )}
                 </div>
 
                 {isCharMode && (
@@ -233,7 +324,7 @@ function ChatArea({ mood, chatMode, character, onCharacterChange }) {
 
                 {messages.map((msg) => (
                     <div
-                        key={msg._id}
+                        key={msg.id}
                         className={`message-wrapper animate-fade-in ${msg.sender === 'user' ? 'user-msg' : 'bot-msg'}`}
                     >
                         <div className="avatar" style={

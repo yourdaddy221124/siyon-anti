@@ -78,7 +78,9 @@ function Chat() {
                 </header>
 
                 <div className="chat-scroll-area">
+                    {/* Unique key ensures component resets completely on user change */}
                     <ChatArea
+                        key={user?.id}
                         mood={currentMood}
                         chatMode={chatMode}
                         character={character}

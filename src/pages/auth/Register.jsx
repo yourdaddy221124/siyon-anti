@@ -2,8 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, Navigate } from 'react-router-dom';
 import { Sparkles, Mail, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { useMutation } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
+import { supabase } from '../../lib/supabase';
 import './Auth.css';
 
 function Register() {
@@ -14,8 +13,7 @@ function Register() {
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
     const navigate = useNavigate();
-    const { user, loading, signIn: setAuthUser } = useAuth();
-    const createProfile = useMutation(api.users.createProfile);
+    const { user, loading } = useAuth();
 
     // Redirect if already logged in
     if (!loading && user) {
@@ -35,25 +33,46 @@ function Register() {
         }
 
         try {
-            // Create profile in Convex including password
-            const userData = await createProfile({
-                email: email,
-                password: password,
-                full_name: name,
-                subscription_status: 'Active',
-                subscription_tier: 'Free'
+            // 1. Sign up the user in Supabase Auth
+            const { data: authData, error: authError } = await supabase.auth.signUp({
+                email,
+                password,
             });
 
-            if (userData) {
-                // Fetch the full object for context
-                setAuthUser({
-                    _id: userData,
-                    email: email,
-                    full_name: name,
-                    subscription_status: 'Active',
-                    subscription_tier: 'Free'
-                });
-                navigate('/chat');
+            if (authError) throw authError;
+
+            if (authData.user) {
+                // If there's no session, it means email confirmation is enabled
+                if (!authData.session) {
+                    setSuccess('Registration successful! Please check your email to confirm your account before logging in.');
+                    setIsLoading(false);
+                    return;
+                }
+
+                // 2. Create the user profile in the public user_profiles table
+                // Note: This requires a session to pass RLS
+                const { error: profileError } = await supabase
+                    .from('user_profiles')
+                    .upsert([
+                        {
+                            id: authData.user.id,
+                            email: email,
+                            full_name: name,
+                            subscription_status: 'Active',
+                            subscription_tier: 'Free',
+                        }
+                    ]);
+
+                if (profileError) {
+                    console.error("Profile creation error:", profileError);
+                    // We don't throw here because the user IS created in Auth.
+                    // They might just need to log in again or it's a transient RLS issue.
+                }
+
+                setSuccess('Account created successfully! Redirecting...');
+                setTimeout(() => {
+                    navigate('/chat');
+                }, 1500);
             }
         } catch (error) {
             console.error("Registration error:", error);
